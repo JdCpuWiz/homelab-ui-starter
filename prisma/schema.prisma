@@ -10,9 +10,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example placeholder — delete this block when you add your first real model.
-// model Example {
-//   id        Int      @id @default(autoincrement())
-//   name      String   @db.VarChar(120)
-//   createdAt DateTime @default(now())
-// }
+// Placeholder model — Prisma needs at least one model in the schema for
+// `prisma generate` to produce a usable client. Delete this when you
+// add your first real model.
+model StarterMarker {
+  id Int @id @default(autoincrement())
+
+  @@map("_starter_marker")
+}

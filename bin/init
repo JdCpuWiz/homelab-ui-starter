@@ -76,9 +76,11 @@ fi
 TARGETS=(
   package.json
   compose.yaml
+  Dockerfile
   .env.example
   app/layout.tsx
   app/page.tsx
+  app/globals.css
   components/AppShell.tsx
   lib/logger.ts
   tailwind.config.ts
