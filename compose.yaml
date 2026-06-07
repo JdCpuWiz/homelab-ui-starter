@@ -1,0 +1,18 @@
+services:
+  __APP_NAME__:
+    build:
+      context: .
+      args:
+        - GIT_SHA=${GIT_SHA:-unknown}
+    container_name: __APP_NAME__
+    restart: unless-stopped
+    ports:
+      - "${PORT:-__APP_PORT__}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - ./data:/app/data

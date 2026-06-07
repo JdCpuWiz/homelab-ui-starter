@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * __APP_NAME__ globals — tokens come from @jdcpuwiz/homelab-ui/globals.css
+ * (imported in app/layout.tsx before this file). Only project-specific
+ * overrides live here.
+ *
+ * Common overrides:
+ *   --hl-sidebar-width: 18rem;  for roomier sidebar nav
+ *   --hl-brand: #00aaff;        for a non-orange brand
+ */
+:root {
+  /* add your overrides here */
+}

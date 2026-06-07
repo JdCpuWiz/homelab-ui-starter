@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# bin/init — replace template placeholders with project-specific values.
+#
+# Usage:
+#   ./bin/init              — interactive prompt for all four values
+#   ./bin/init <slug>       — slug supplied; prompt for port/host/db
+#   ./bin/init <slug> <port> <host> <db>  — fully non-interactive
+#
+# Replaces these placeholders across the tree:
+#   __APP_NAME__   — kebab-case slug (used in container name, DB user, etc)
+#   __APP_PORT__   — host port published by docker compose (e.g. 3050)
+#   __APP_HOST__   — short label for CLAUDE.md docs (e.g. "pve1 CT 100")
+#   __APP_DB__     — DB name (defaults to slug with hyphens → underscores)
+#
+# Renames ansible/deploy-__APP_NAME__.yml → ansible/deploy-<slug>.yml.
+# Stages a chore commit and stops — you push when ready.
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
+
+prompt() {
+  # $1 = label, $2 = default (optional)
+  local label="$1"
+  local default="${2:-}"
+  local input
+  if [[ -n "$default" ]]; then
+    read -r -p "$label [$default]: " input
+    echo "${input:-$default}"
+  else
+    read -r -p "$label: " input
+    echo "$input"
+  fi
+}
+
+# ── collect inputs ────────────────────────────────────────────────────────
+SLUG="${1:-}"
+PORT="${2:-}"
+HOST="${3:-}"
+DB="${4:-}"
+
+if [[ -z "$SLUG" ]]; then
+  SLUG="$(prompt 'Project slug (kebab-case)')"
+fi
+if [[ ! "$SLUG" =~ ^[a-z][a-z0-9-]+$ ]]; then
+  echo "error: slug must be lowercase letters/digits/hyphens, starting with a letter (got: '$SLUG')" >&2
+  exit 2
+fi
+
+if [[ -z "$PORT" ]]; then
+  PORT="$(prompt 'Host port (e.g. 3050)')"
+fi
+if [[ ! "$PORT" =~ ^[0-9]+$ ]] || (( PORT < 1 || PORT > 65535 )); then
+  echo "error: port must be 1-65535 (got: '$PORT')" >&2
+  exit 2
+fi
+
+if [[ -z "$HOST" ]]; then
+  HOST="$(prompt 'Deploy host label (e.g. "pve1 CT 100 / 192.168.7.28")')"
+fi
+
+if [[ -z "$DB" ]]; then
+  DB_DEFAULT="${SLUG//-/_}"
+  DB="$(prompt 'DB name' "$DB_DEFAULT")"
+fi
+
+# ── sanity check we're in a starter template ──────────────────────────────
+if ! grep -ql '__APP_NAME__' package.json 2>/dev/null; then
+  echo "error: package.json doesn't contain __APP_NAME__ placeholder — already initialized?" >&2
+  exit 3
+fi
+
+# ── replace placeholders ──────────────────────────────────────────────────
+# Files that contain placeholders. Anchored to project root.
+TARGETS=(
+  package.json
+  compose.yaml
+  .env.example
+  app/layout.tsx
+  app/page.tsx
+  components/AppShell.tsx
+  lib/logger.ts
+  tailwind.config.ts
+  prisma/schema.prisma
+  CLAUDE.md
+  README.md
+  DESIGN.md
+  ansible/deploy-__APP_NAME__.yml
+)
+
+for f in "${TARGETS[@]}"; do
+  [[ -f "$f" ]] || continue
+  # macOS BSD sed needs `-i ''`; GNU sed wants `-i`. Use a tempfile dance
+  # for portability.
+  tmp="$(mktemp)"
+  sed \
+    -e "s|__APP_NAME__|$SLUG|g" \
+    -e "s|__APP_PORT__|$PORT|g" \
+    -e "s|__APP_HOST__|$HOST|g" \
+    -e "s|__APP_DB__|$DB|g" \
+    "$f" > "$tmp"
+  mv "$tmp" "$f"
+done
+
+# Rename the ansible playbook.
+mv "ansible/deploy-__APP_NAME__.yml" "ansible/deploy-$SLUG.yml"
+
+# ── stage chore commit ────────────────────────────────────────────────────
+git add -A
+git -c user.email="${GIT_COMMIT_EMAIL:-shad@deckerzoo.com}" \
+    -c user.name="${GIT_COMMIT_NAME:-Wiz}" \
+    commit -m "chore: init from homelab-ui-starter
+
+slug:  $SLUG
+port:  $PORT
+host:  $HOST
+db:    $DB" >/dev/null
+
+echo
+echo "✅ Initialized $SLUG"
+echo "   port: $PORT"
+echo "   host: $HOST"
+echo "   db:   $DB"
+echo
+echo "Next:"
+echo "  1. npm install"
+echo "  2. cp .env.example .env  and fill DATABASE_URL"
+echo "  3. npm run dev  (http://localhost:$PORT)"
+echo "  4. git push -u origin main  (when you're ready)"

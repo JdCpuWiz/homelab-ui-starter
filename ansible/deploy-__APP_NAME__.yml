@@ -1,0 +1,95 @@
+---
+# Deploy __APP_NAME__ to production host (__APP_HOST__).
+#
+# First-deploy checklist (one-time, on the host):
+#   1. mkdir -p /home/shad/docker/__APP_NAME__/data
+#   2. git clone git@github.com:JdCpuWiz/__APP_NAME__.git /home/shad/docker/__APP_NAME__
+#   3. cp .env.example .env  and fill in DATABASE_URL, PUID, PGID
+#   4. add the host to ansible-scripts inventory under group `__APP_NAME__`
+#
+# Usage:
+#   ansible-playbook -i /home/shad/projects/ansible-scripts/automation/ansible/hosts/hosts.yaml \
+#     ansible/deploy-__APP_NAME__.yml
+#
+# Variables (override via -e):
+#   repo_dir   — path to the git repo on the remote host (default: /home/shad/docker/__APP_NAME__)
+#   git_branch — branch to pull                          (default: main)
+
+- name: Deploy __APP_NAME__
+  hosts: __APP_NAME__
+  gather_facts: no
+  become: no
+  vars:
+    repo_dir: "/home/shad/docker/__APP_NAME__"
+    git_branch: "main"
+
+  tasks:
+    - name: Pull latest code from {{ git_branch }}
+      ansible.builtin.git:
+        repo: "git@github.com:JdCpuWiz/__APP_NAME__.git"
+        dest: "{{ repo_dir }}"
+        version: "{{ git_branch }}"
+        update: yes
+        force: no
+        accept_hostkey: yes
+      tags: [pull]
+
+    - name: Verify .env exists (first-deploy gate)
+      ansible.builtin.stat:
+        path: "{{ repo_dir }}/.env"
+      register: env_file
+
+    - name: Fail loudly if .env is missing
+      ansible.builtin.fail:
+        msg: >-
+          {{ repo_dir }}/.env is missing. First-deploy step: copy .env.example
+          to .env on the host and fill DATABASE_URL + PUID/PGID before re-running.
+      when: not env_file.stat.exists
+
+    - name: Capture HEAD commit sha for build cache-bust
+      ansible.builtin.command:
+        cmd: git rev-parse HEAD
+        chdir: "{{ repo_dir }}"
+      register: git_sha
+      changed_when: false
+      tags: [compose]
+
+    - name: Build and start container
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: "{{ repo_dir }}"
+      environment:
+        GIT_SHA: "{{ git_sha.stdout }}"
+      tags: [compose]
+      changed_when: true
+
+    - name: Wait for container to settle
+      ansible.builtin.pause:
+        seconds: 8
+      tags: [verify]
+
+    - name: Show container status
+      ansible.builtin.command:
+        cmd: docker compose ps
+        chdir: "{{ repo_dir }}"
+      register: compose_status
+      changed_when: false
+      tags: [verify]
+
+    - name: Display container status
+      ansible.builtin.debug:
+        msg: "{{ compose_status.stdout_lines }}"
+      tags: [verify]
+
+    - name: Probe /healthz
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:__APP_PORT__/api/healthz"
+        return_content: yes
+        timeout: 10
+      register: healthz_probe
+      tags: [verify]
+
+    - name: Display /healthz result
+      ansible.builtin.debug:
+        msg: "{{ healthz_probe.json }}"
+      tags: [verify]

@@ -1,0 +1,18 @@
+// Prisma schema stub — add your models below.
+// See https://pris.ly/d/prisma-schema for syntax.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Example placeholder — delete this block when you add your first real model.
+// model Example {
+//   id        Int      @id @default(autoincrement())
+//   name      String   @db.VarChar(120)
+//   createdAt DateTime @default(now())
+// }
