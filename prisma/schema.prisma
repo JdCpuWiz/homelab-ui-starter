@@ -6,8 +6,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime queries through the PgBouncer pooler (transaction mode).
+  url       = env("DATABASE_URL")
+  // Migrations / `prisma db push` need a DIRECT Postgres connection — the
+  // pooler can't run them. DIRECT_URL must be set (see .env.example); it's
+  // only used by migrate/db push, never by the runtime client.
+  directUrl = env("DIRECT_URL")
 }
 
 // Placeholder model — Prisma needs at least one model in the schema for

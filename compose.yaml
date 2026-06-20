@@ -10,6 +10,9 @@ services:
       - "${PORT:-__APP_PORT__}:3000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      # DIRECT_URL: direct Postgres (:5433) for the entrypoint's prisma db push
+      # (the pooler can't migrate). Falls back to DATABASE_URL if unset.
+      DIRECT_URL: ${DIRECT_URL:-${DATABASE_URL}}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}

@@ -14,8 +14,10 @@ tinyauth handles SSO at the edge; never add next-auth").
 - Next.js 16 (App Router) + TypeScript strict
 - Tailwind v3 + `@jdcpuwiz/homelab-ui` preset (do NOT swap to Tailwind v4
   until the package ships a v4 variant)
-- Prisma 5 + Postgres on shared cluster `192.168.7.223:6432` (PgBouncer),
-  db name `__APP_DB__`
+- Prisma 5 + Postgres on shared cluster via PgBouncer `192.168.7.223:5432`
+  (TRANSACTION mode → `pgbouncer=true` on DATABASE_URL). Migrations use a
+  direct connection `:5433` (DIRECT_URL). db name `__APP_DB__`. The pooler
+  uses auth_query (#169), so a new DB role works as soon as it exists.
 - pino structured logging (`lib/logger.ts`)
 
 ## Domains & Ports
@@ -28,8 +30,8 @@ tinyauth handles SSO at the edge; never add next-auth").
 
 ```bash
 npm install
-cp .env.example .env  # fill DATABASE_URL
-npx prisma db push    # sync schema
+cp .env.example .env  # fill DATABASE_URL (pooler :5432) + DIRECT_URL (:5433)
+npx prisma db push    # sync schema — uses DIRECT_URL (the pooler can't migrate)
 npm run dev           # http://localhost:__APP_PORT__
 
 npm run build
@@ -60,8 +62,12 @@ new component to verify it matches.
 
 - TODO — known gotchas (e.g. "Streaming uploads — don't `await
   file.arrayBuffer()` on large files, OOMs the container").
-- `entrypoint.sh` runs `prisma db push` WITHOUT `--accept-data-loss` —
-  destructive schema changes should fail loudly. Temp-add the flag for
-  an intentional drop, then revert before merge.
+- `entrypoint.sh` runs `prisma db push` against DIRECT_URL, NON-FATAL
+  (`|| true`) so a boot where direct Postgres `:5433` is unreachable (the
+  shared cluster is localhost-only on 5433) warns instead of crash-looping.
+  For those, run `prisma db push` yourself on the DB host / via tunnel. Still
+  NO `--accept-data-loss` — a destructive change should fail that manual push
+  loudly. (Single-instance app with no real migrations? Consider SQLite-only
+  and drop Prisma entirely, like pawtrol did.)
 - Brand orange `#ff9900` is identity-only. Status pills use the global
   solid-color palette per `~/.claude/CLAUDE.md`.

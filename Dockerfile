@@ -7,6 +7,11 @@ WORKDIR /app
 # ── deps ──────────────────────────────────────────────────────────────────
 FROM base AS deps
 COPY package.json package-lock.json* ./
+# prisma/ must be present before `npm install` because the `postinstall`
+# hook runs `prisma generate`, which needs the schema. Without this the
+# deps stage aborts with "Could not find Prisma Schema". (The builder
+# stage regenerates the client with openssl present.)
+COPY prisma ./prisma
 RUN npm install --no-audit --no-fund
 
 # ── builder ───────────────────────────────────────────────────────────────
