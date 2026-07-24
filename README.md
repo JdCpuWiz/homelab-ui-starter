@@ -23,8 +23,8 @@ npm install
 npm run dev     # http://localhost:3xxx
 ```
 
-That's it. The landing page renders with Geist fonts, the canonical
-sidebar, and a stamped version footer. From here, edit
+That's it. The landing page renders with the standard system font stack,
+the canonical sidebar, and a stamped version footer. From here, edit
 `app/page.tsx`, `components/AppShell.tsx`, and `prisma/schema.prisma`
 to build your app.
 
@@ -44,9 +44,13 @@ homelab-ui-starter` commit and stops — you commit it when you're ready.
 
 ## What's pre-wired
 
-- **Fonts** — Geist + Geist Mono + Orbitron via `next/font/google`
-  inline in `app/layout.tsx` (next/font is a build-time directive that
-  cannot be re-exported from a library — keep the snippet local).
+- **Fonts** — the sanctioned **system stack**, and nothing to wire. The
+  `--hl-font-*` tokens arrive with `@jdcpuwiz/homelab-ui/globals.css`,
+  which `app/layout.tsx` already imports. No webfont is loaded and none
+  should be added (Wiz ruling 2026-07-23, Change #345). If you ever need
+  a display accent, load that one face in `app/layout.tsx` itself
+  (next/font is build-time and cannot be re-exported from a library) and
+  override `--hl-font-display` only.
 - **Tailwind preset** — `@jdcpuwiz/homelab-ui/tailwind-preset` applied
   in `tailwind.config.ts`. Override tokens at `:root` in
   `app/globals.css`.

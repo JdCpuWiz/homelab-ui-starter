@@ -17,7 +17,10 @@ documents project-specific deviations only.
   - Neutral / Disabled    → `#6b7280`
   - Empty / Unknown       → `#4b5563`
   - Primary / Brand       → `#ff9900` *(black text)*
-- **Geist + Geist Mono + Orbitron** wired via the snippet in `app/layout.tsx`
+- **Typography: the system stack** — `--hl-font-sans` / `--hl-font-mono` /
+  `--hl-font-display`, all resolving to the platform font. NO webfont is
+  loaded and none should be added (Wiz ruling 2026-07-23, Change #345);
+  importing `@jdcpuwiz/homelab-ui/globals.css` is the whole font setup.
 - **Sidebar shell** at w-60 default (override `--hl-sidebar-width` per project)
 - **Logo block** w-36 h-36 centered, px-4 pt-6 pb-5, border-b-2
 - **Page-title purple** `#aa89b7` (h1 only — `text-title`)

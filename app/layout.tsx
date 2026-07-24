@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Orbitron } from "next/font/google";
 import "@jdcpuwiz/homelab-ui/globals.css";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
-// next/font/google is a build-time directive — the loader calls MUST
-// be declared as `const X = Font(...)` in the consumer's app source.
-// Re-exporting from @jdcpuwiz/homelab-ui doesn't work (the package's
-// SWC plugin needs literal const syntax). Don't refactor this away.
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const orbitron = Orbitron({ variable: "--font-orbitron", subsets: ["latin"] });
+// NO FONT WIRING — that is deliberate, not an omission.
+//
+// The fleet standard is the platform system stack (Wiz ruling 2026-07-23,
+// Change #345). The `--hl-font-sans` / `--hl-font-mono` / `--hl-font-display`
+// tokens come in with the homelab-ui globals.css imported above, so importing
+// it IS the font setup. Do NOT add a next/font loader here: a scaffolded app
+// that loads a webfont renders off-standard.
+//
+// The one exception is a deliberate display accent (a kiosk clock, a hero) —
+// load that face in THIS file (next/font is build-time and can't be
+// re-exported from a library) and override `--hl-font-display` only.
 
 export const metadata: Metadata = {
   title: "__APP_NAME__",
@@ -22,9 +25,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} antialiased`}
-      >
+      <body className="antialiased">
         <AppShell>{children}</AppShell>
       </body>
     </html>

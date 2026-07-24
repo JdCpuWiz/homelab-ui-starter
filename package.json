@@ -13,7 +13,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@jdcpuwiz/homelab-ui": "^0.3.0",
+    "@jdcpuwiz/homelab-ui": "^0.6.0",
     "@prisma/client": "^5.22.0",
     "lucide-react": "^0.460.0",
     "next": "^15",
