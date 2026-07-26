@@ -1,0 +1,33 @@
+# Keep secrets and local state OUT of the build context.
+#
+# The Dockerfile does `COPY . .` in the builder stage, so anything not
+# excluded here is baked into an image layer — .env carries the plaintext
+# DATABASE_URL password, and a layer is readable by anyone who can pull the
+# image. Runtime config arrives via docker compose `environment:`, never by
+# reading a file inside the image.
+.env
+.env.*
+!.env.example
+
+# Local build + dependency artifacts — rebuilt inside the image anyway,
+# and copying them in busts the layer cache on every change.
+node_modules
+.next
+out
+dist
+
+# VCS + editor noise
+.git
+.gitignore
+.github
+*.log
+npm-debug.log*
+
+# Local data volume (mounted at runtime, must not be pre-seeded)
+data
+
+# Docs that don't belong in a runtime image
+docs
+README.md
+CLAUDE.md
+DESIGN.md
