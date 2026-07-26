@@ -17,13 +17,24 @@ documents project-specific deviations only.
   - Neutral / Disabled    → `#6b7280`
   - Empty / Unknown       → `#4b5563`
   - Primary / Brand       → `#ff9900` *(black text)*
-- **Typography: the system stack** — `--hl-font-sans` / `--hl-font-mono` /
-  `--hl-font-display`, all resolving to the platform font. NO webfont is
-  loaded and none should be added (Wiz ruling 2026-07-23, Change #345);
-  importing `@jdcpuwiz/homelab-ui/globals.css` is the whole font setup.
+- **Typography: three faces by job** (Wiz ruling 2026-07-24, BuildPlan #57 —
+  supersedes the brief system-ui-only ruling in Change #345):
+  - `--hl-font-sans` → **Poppins** — body, UI, headings, labels. Everything read.
+  - `--hl-font-display` → **Orbitron** — big numbers ONLY, `>= ~1.5rem`
+    (stat heroes, clocks). Never on text labels, never below that size.
+  - `--hl-font-mono` → **JetBrains Mono** — small values, version stamps,
+    code, `< ~1.5rem`.
+
+  The package NAMES these in its tokens but ships no font files. **`app/layout.tsx`
+  must load them via `next/font`** — that wiring is required, not optional, and
+  the scaffold already includes it. Do not remove it: without the loaders the
+  token names resolve to nothing and the browser falls back silently, which
+  reads as correct in code review and is wrong on screen.
+- **Text colour: one flat `#f0f1f4`** for everything read. The opacity ramp
+  (`text-white/30`–`/80`) is dead — hierarchy comes from size and weight only.
+  `#ff9900` for numeric values, `#7d838d` for input placeholders ONLY.
 - **Sidebar shell** at w-60 default (override `--hl-sidebar-width` per project)
 - **Logo block** w-36 h-36 centered, px-4 pt-6 pb-5, border-b-2
-- **Page-title purple** `#aa89b7` (h1 only — `text-title`)
 - **Radii aliases**: `rounded-widget` (xl), `rounded-row` (lg), `rounded-chip`, `rounded-panel` (2xl)
 
 ## Project overrides

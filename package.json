@@ -1,6 +1,6 @@
 {
   "name": "__APP_NAME__",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@jdcpuwiz/homelab-ui": "^0.6.0",
+    "@jdcpuwiz/homelab-ui": "^0.7.1",
     "@prisma/client": "^5.22.0",
     "lucide-react": "^0.460.0",
     "next": "^15",

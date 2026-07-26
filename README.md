@@ -23,7 +23,7 @@ npm install
 npm run dev     # http://localhost:3xxx
 ```
 
-That's it. The landing page renders with the standard system font stack,
+That's it. The landing page renders in the standard three-face typography,
 the canonical sidebar, and a stamped version footer. From here, edit
 `app/page.tsx`, `components/AppShell.tsx`, and `prisma/schema.prisma`
 to build your app.
@@ -44,13 +44,16 @@ homelab-ui-starter` commit and stops — you commit it when you're ready.
 
 ## What's pre-wired
 
-- **Fonts** — the sanctioned **system stack**, and nothing to wire. The
-  `--hl-font-*` tokens arrive with `@jdcpuwiz/homelab-ui/globals.css`,
-  which `app/layout.tsx` already imports. No webfont is loaded and none
-  should be added (Wiz ruling 2026-07-23, Change #345). If you ever need
-  a display accent, load that one face in `app/layout.tsx` itself
-  (next/font is build-time and cannot be re-exported from a library) and
-  override `--hl-font-display` only.
+- **Fonts** — the sanctioned **three faces by job** (Wiz ruling 2026-07-24,
+  BuildPlan #57, superseding Change #345's system-ui-only rule): **Poppins**
+  for everything read, **Orbitron** for big numbers only (`>= ~1.5rem`),
+  **JetBrains Mono** for small values and code. `app/layout.tsx` already
+  wires all three via `next/font` and puts the variables on `<html>`.
+  **Leave that wiring in place** — the package names the faces in its
+  `--hl-font-*` tokens but ships no font files, and next/font cannot be
+  re-exported from a library, so the loaders have to live in your app
+  source. Strip them and the tokens resolve to nothing and the browser
+  falls back silently: correct-looking in review, wrong on screen.
 - **Tailwind preset** — `@jdcpuwiz/homelab-ui/tailwind-preset` applied
   in `tailwind.config.ts`. Override tokens at `:root` in
   `app/globals.css`.
