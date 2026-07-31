@@ -24,8 +24,8 @@ datasource db {
 // so it re-plans the same AlterColumn on every run and `db push` dies with
 // `relation "_starter_marker_id_seq" already exists` on the SECOND push and
 // every push after it. Because entrypoint.sh makes the push non-fatal, the
-// container still boots and the deploy still reports GREEN — the schema just
-// silently stops tracking the schema file (BUG #219). Proven by pushing
+// container still boots and the deploy still reports GREEN — the database
+// just silently stops tracking the schema file (BUG #219). Proven by pushing
 // three model shapes twice each against a live database: plain name and
 // non-underscore `@@map` both report "already in sync"; only the
 // underscore-prefixed one fails.
