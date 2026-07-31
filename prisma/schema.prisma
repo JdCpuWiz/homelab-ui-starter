@@ -16,10 +16,21 @@ datasource db {
 }
 
 // Placeholder model — Prisma needs at least one model in the schema for
-// `prisma generate` to produce a usable client. Delete this when you
-// add your first real model.
+// `prisma generate` to produce a usable client (it errors out on an empty
+// schema). Delete this when you add your first real model.
+//
+// NOTE the table name has NO leading underscore. Prisma 5.22 cannot
+// re-introspect an autoincrement column whose sequence name starts with `_`,
+// so it re-plans the same AlterColumn on every run and `db push` dies with
+// `relation "_starter_marker_id_seq" already exists` on the SECOND push and
+// every push after it. Because entrypoint.sh makes the push non-fatal, the
+// container still boots and the deploy still reports GREEN — the schema just
+// silently stops tracking the schema file (BUG #219). Proven by pushing
+// three model shapes twice each against a live database: plain name and
+// non-underscore `@@map` both report "already in sync"; only the
+// underscore-prefixed one fails.
 model StarterMarker {
   id Int @id @default(autoincrement())
 
-  @@map("_starter_marker")
+  @@map("starter_marker")
 }

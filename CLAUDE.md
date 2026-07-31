@@ -62,12 +62,22 @@ new component to verify it matches.
 
 - TODO — known gotchas (e.g. "Streaming uploads — don't `await
   file.arrayBuffer()` on large files, OOMs the container").
-- `entrypoint.sh` runs `prisma db push` against DIRECT_URL, NON-FATAL
-  (`|| true`) so a boot where direct Postgres `:5433` is unreachable (the
-  shared cluster is localhost-only on 5433) warns instead of crash-looping.
-  For those, run `prisma db push` yourself on the DB host / via tunnel. Still
-  NO `--accept-data-loss` — a destructive change should fail that manual push
+- `entrypoint.sh` runs `prisma db push` against DIRECT_URL, NON-FATAL so a
+  boot where direct Postgres `:5433` is unreachable warns instead of
+  crash-looping. `:5433` is actually LAN-reachable and password-gated on the
+  shared cluster (BUG #181 — it is NOT localhost-only, despite what older
+  copies of this comment claimed), so that should rarely fire; when it does,
+  run `prisma db push` yourself against DIRECT_URL. Still NO
+  `--accept-data-loss` — a destructive change should fail that manual push
   loudly. (Single-instance app with no real migrations? Consider SQLite-only
   and drop Prisma entirely, like pawtrol did.)
+- The placeholder `StarterMarker` model's `@@map` must NOT start with an
+  underscore — Prisma 5.22 can't re-introspect an autoincrement column whose
+  sequence name begins with `_`, so `db push` succeeds once then fails on
+  every push after (BUG #219). If you rename the placeholder before deleting
+  it, keep the leading-underscore-free table name. And because the push is
+  non-fatal, a broken push is invisible unless something reads the boot
+  logs — the deploy playbook's "Read container logs for the schema-push
+  result" task does this; don't remove it.
 - Brand orange `#ff9900` is identity-only. Status pills use the global
   solid-color palette per `~/.claude/CLAUDE.md`.

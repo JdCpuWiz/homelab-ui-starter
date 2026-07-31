@@ -72,7 +72,9 @@ homelab-ui-starter` commit and stops — you commit it when you're ready.
 - **compose.yaml** — single service + `./data:/app/data` volume +
   DATABASE_URL env.
 - **ansible/deploy-`__APP_NAME__`.yml** — git pull + `docker compose
-  up -d --build` + `/healthz` probe.
+  up -d --build` + `/healthz` probe + a boot-log check that fails loudly
+  if `prisma db push` silently failed (BUG #219 — `/healthz` alone can't
+  see a stale schema).
 
 ## After running `bin/init`
 

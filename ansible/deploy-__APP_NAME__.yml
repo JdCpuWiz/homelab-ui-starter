@@ -93,3 +93,38 @@
       ansible.builtin.debug:
         msg: "{{ healthz_probe.json }}"
       tags: [verify]
+
+    # /healthz is NOT sufficient on its own. It runs `SELECT 1`, which needs no
+    # tables — so it returns `db: ok` even when the entrypoint's `prisma db
+    # push` failed and the schema is stale (BUG #219: a leading underscore in
+    # a table name breaks `db push` on every push after the first, and
+    # nothing noticed — green container, green healthz, unmigrated database).
+    #
+    # The push is deliberately non-fatal in the container so an unreachable
+    # :5433 warns instead of crash-looping. The cost of that choice is that
+    # something else has to actually READ the result — otherwise "non-fatal"
+    # quietly means "unobserved". That is this task.
+    - name: Read container logs for the schema-push result
+      ansible.builtin.command:
+        cmd: docker compose logs --tail 200 __APP_NAME__
+        chdir: "{{ repo_dir }}"
+      register: boot_logs
+      changed_when: false
+      tags: [verify]
+
+    - name: Fail when the schema push did not succeed
+      ansible.builtin.fail:
+        msg: >-
+          Container is UP and /healthz is green, but `prisma db push` FAILED on
+          boot — the database schema is stale relative to prisma/schema.prisma.
+          healthz only runs SELECT 1, so it cannot see this. Offending log
+          lines:
+          {{ boot_logs.stdout_lines | select('search', 'prisma db push failed|already exists|Error:') | list }}
+      when: boot_logs.stdout is search('prisma db push failed')
+      tags: [verify]
+
+    - name: Confirm schema push succeeded
+      ansible.builtin.debug:
+        msg: "Schema push OK — no 'prisma db push failed' in boot logs."
+      when: not (boot_logs.stdout is search('prisma db push failed'))
+      tags: [verify]
